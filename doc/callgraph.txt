@@ -1,0 +1,85 @@
+*callgraph.txt*  LSP call hierarchy as a left-to-right graph
+
+==============================================================================
+CONTENTS                                                    *callgraph-contents*
+
+  1. Introduction ............................ |callgraph-introduction|
+  2. Usage ................................... |callgraph-usage|
+  3. Configuration ........................... |callgraph-configuration|
+  4. Commands ................................ |callgraph-commands|
+  5. Highlight groups ........................ |callgraph-highlights|
+
+==============================================================================
+1. INTRODUCTION                                         *callgraph-introduction*
+
+callgraph.nvim shows the LSP call hierarchy of the function under the cursor
+as a graph that reads left to right. The function is in the middle, its
+callers branch to the left, its callees branch to the right, and a source
+preview of the selected function is shown beside the graph.
+
+Requires Neovim 0.11 and a language server that supports call hierarchy.
+
+==============================================================================
+2. USAGE                                                        *callgraph-usage*
+
+Put the cursor on a function and run |:Callgraph|. Keys inside the popup:
+
+  l          Move right (into callees, or toward the middle from a caller).
+  h          Move left (into callers, or toward the middle from a callee).
+  j / k      Next or previous function in the same column.
+  <Space>    Open or fold the callers/callees of the selection.
+  E          Expand everything under the selection.
+  <Tab>      Focus the preview. <Tab>, <Esc> or q return to the graph.
+  <CR>       Jump to the selected function and close the popup.
+  <C-d>      Scroll the preview down.
+  <C-u>      Scroll the preview up.
+  q, <Esc>   Close.
+
+A `<` or `>` marker means the callers or callees have not been loaded, and
+`<->` marks a recursive call.
+
+==============================================================================
+3. CONFIGURATION                                        *callgraph-configuration*
+
+                                                              *callgraph.setup()*
+require("callgraph").setup({opts})
+
+Optional. Defaults: >lua
+
+    require("callgraph").setup({
+      width = 0.94,
+      height = 0.9,
+      graph_ratio = 0.56,
+      border = "rounded",
+      max_expand_depth = 6,
+      max_expand_nodes = 400,
+      max_label = 34,
+      mappings = {
+        left = "h", right = "l", down = "j", up = "k",
+        toggle = "<Space>", expand_all = "E", focus_preview = "<Tab>",
+        open = "<CR>", close = "q",
+        scroll_down = "<C-d>", scroll_up = "<C-u>",
+      },
+    })
+<
+Set a mapping to false to skip it.
+
+==============================================================================
+4. COMMANDS                                                  *callgraph-commands*
+
+                                                                   *:Callgraph*
+:Callgraph          Open the call graph for the function under the cursor.
+
+==============================================================================
+5. HIGHLIGHT GROUPS                                         *callgraph-highlights*
+
+  CallgraphCaller    Caller names (links to String).
+  CallgraphCallee    Callee names (links to Function).
+  CallgraphRoot      The function in the middle (links to Title).
+  CallgraphPath      Path from the selection to the middle.
+  CallgraphSel       The selected function.
+  CallgraphEdge      Connector lines (links to Comment).
+
+All groups are defined with `default = true`.
+
+ vim:tw=78:ts=8:ft=help:norl:
