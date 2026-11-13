@@ -1,7 +1,7 @@
 -- Run with: nvim --headless -u NONE -l tests/run.lua
 local root = vim.fn.fnamemodify(debug.getinfo(1, "S").source:sub(2), ":p:h:h")
 vim.opt.rtp:prepend(root)
-vim.cmd("runtime plugin/callgraph.lua")
+vim.cmd("runtime plugin/callmap.lua")
 
 local failures = 0
 local function check(name, cond)
@@ -13,9 +13,9 @@ local function check(name, cond)
   end
 end
 
-local cg = require("callgraph")
+local cg = require("callmap")
 
-local file = root .. "/lua/callgraph/init.lua"
+local file = root .. "/lua/callmap/init.lua"
 vim.cmd("edit " .. file)
 local uri = vim.uri_from_fname(file)
 

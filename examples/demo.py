@@ -1,6 +1,6 @@
-"""A small module to try callgraph.nvim on.
+"""A small module to try callmap.nvim on.
 
-Put the cursor on `run_pipeline` and run :Callgraph.
+Put the cursor on `run_pipeline` and run :Callmap.
 """
 
 

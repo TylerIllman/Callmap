@@ -1,4 +1,4 @@
---- callgraph.nvim: explore LSP call hierarchies as a left-to-right graph with a source preview.
+--- callmap.nvim: explore LSP call hierarchies as a left-to-right graph with a source preview.
 local M = {}
 
 M.config = {
@@ -37,8 +37,8 @@ function M.setup(opts)
   M.config = vim.tbl_deep_extend("force", M.config, opts or {})
 end
 
-local pv_ns = vim.api.nvim_create_namespace("callgraph_preview")
-local hl_ns = vim.api.nvim_create_namespace("callgraph_graph")
+local pv_ns = vim.api.nvim_create_namespace("callmap_preview")
+local hl_ns = vim.api.nvim_create_namespace("callmap_graph")
 
 local function footer()
   local m = M.config.mappings
@@ -56,12 +56,12 @@ end
 
 local state
 
-vim.api.nvim_set_hl(0, "CallgraphCaller", { link = "String", default = true })
-vim.api.nvim_set_hl(0, "CallgraphCallee", { link = "Function", default = true })
-vim.api.nvim_set_hl(0, "CallgraphRoot", { link = "Title", default = true })
-vim.api.nvim_set_hl(0, "CallgraphPath", { bold = true, underline = true, default = true })
-vim.api.nvim_set_hl(0, "CallgraphSel", { reverse = true, bold = true, default = true })
-vim.api.nvim_set_hl(0, "CallgraphEdge", { link = "Comment", default = true })
+vim.api.nvim_set_hl(0, "CallmapCaller", { link = "String", default = true })
+vim.api.nvim_set_hl(0, "CallmapCallee", { link = "Function", default = true })
+vim.api.nvim_set_hl(0, "CallmapRoot", { link = "Title", default = true })
+vim.api.nvim_set_hl(0, "CallmapPath", { bold = true, underline = true, default = true })
+vim.api.nvim_set_hl(0, "CallmapSel", { reverse = true, bold = true, default = true })
+vim.api.nvim_set_hl(0, "CallmapEdge", { link = "Comment", default = true })
 
 local function key_of(item)
   local pos = item.selectionRange.start
@@ -435,7 +435,7 @@ local function render()
       hl_ns,
       r - 1,
       0,
-      { end_col = #lines[r], hl_group = "CallgraphEdge", priority = 50 }
+      { end_col = #lines[r], hl_group = "CallmapEdge", priority = 50 }
     )
   end
 
@@ -458,7 +458,7 @@ local function render()
         hl_ns,
         node.row,
         s,
-        { end_col = e, hl_group = "CallgraphPath", priority = 110 }
+        { end_col = e, hl_group = "CallmapPath", priority = 110 }
       )
     end
     if node == state.sel or (node == rin and state.sel == rout) then
@@ -467,16 +467,16 @@ local function render()
         hl_ns,
         node.row,
         s,
-        { end_col = e, hl_group = "CallgraphSel", priority = 120 }
+        { end_col = e, hl_group = "CallmapSel", priority = 120 }
       )
     end
   end
   for _, n in ipairs(out_nodes) do
-    mark(n, n == rout and "CallgraphRoot" or "CallgraphCallee")
+    mark(n, n == rout and "CallmapRoot" or "CallmapCallee")
   end
   for _, n in ipairs(in_nodes) do
     if n ~= rin then
-      mark(n, "CallgraphCaller")
+      mark(n, "CallmapCaller")
     end
   end
   rin.cell = rout.cell
@@ -629,7 +629,7 @@ local function toggle()
         node.expanded = #node.children > 0
         if #node.children == 0 then
           vim.notify(
-            "Callgraph: "
+            "Callmap: "
               .. node.item.name
               .. " has no "
               .. (node.dir == "incoming" and "callers" or "callees")
@@ -748,7 +748,7 @@ local function build(client, item, origin_win, buf)
 
   local gbuf = vim.api.nvim_create_buf(false, true)
   vim.bo[gbuf].bufhidden = "wipe"
-  vim.bo[gbuf].filetype = "callgraph"
+  vim.bo[gbuf].filetype = "callmap"
   vim.bo[gbuf].modifiable = false
   local gcfg = cfg(col0, gw - 2, " callers  ←  " .. item.name .. "  →  callees ")
   gcfg.footer, gcfg.footer_pos = footer(), "center"
@@ -805,7 +805,7 @@ local function build(client, item, origin_win, buf)
     scroll_preview("<C-u>")
   end, "Scroll preview up")
 
-  local group = vim.api.nvim_create_augroup("CallgraphWindows", { clear = true })
+  local group = vim.api.nvim_create_augroup("CallmapWindows", { clear = true })
   vim.api.nvim_create_autocmd("WinClosed", {
     group = group,
     pattern = { tostring(state.win), tostring(state.pv_win) },
@@ -843,14 +843,14 @@ function M.open()
   local win = vim.api.nvim_get_current_win()
   local clients = vim.lsp.get_clients({ bufnr = buf, method = "textDocument/prepareCallHierarchy" })
   if #clients == 0 then
-    vim.notify("Callgraph: no attached LSP server supports call hierarchy", vim.log.levels.WARN)
+    vim.notify("Callmap: no attached LSP server supports call hierarchy", vim.log.levels.WARN)
     return
   end
   local client = clients[1]
   local params = vim.lsp.util.make_position_params(win, client.offset_encoding)
   client:request("textDocument/prepareCallHierarchy", params, function(_, result)
     if not result or #result == 0 then
-      vim.notify("Callgraph: no function under the cursor", vim.log.levels.WARN)
+      vim.notify("Callmap: no function under the cursor", vim.log.levels.WARN)
       return
     end
     vim.schedule(function()

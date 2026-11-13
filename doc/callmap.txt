@@ -1,18 +1,18 @@
-*callgraph.txt*  LSP call hierarchy as a left-to-right graph
+*callmap.txt*  LSP call hierarchy as a left-to-right graph
 
 ==============================================================================
-CONTENTS                                                    *callgraph-contents*
+CONTENTS                                                    *callmap-contents*
 
-  1. Introduction ............................ |callgraph-introduction|
-  2. Usage ................................... |callgraph-usage|
-  3. Configuration ........................... |callgraph-configuration|
-  4. Commands ................................ |callgraph-commands|
-  5. Highlight groups ........................ |callgraph-highlights|
+  1. Introduction ............................ |callmap-introduction|
+  2. Usage ................................... |callmap-usage|
+  3. Configuration ........................... |callmap-configuration|
+  4. Commands ................................ |callmap-commands|
+  5. Highlight groups ........................ |callmap-highlights|
 
 ==============================================================================
-1. INTRODUCTION                                         *callgraph-introduction*
+1. INTRODUCTION                                         *callmap-introduction*
 
-callgraph.nvim shows the LSP call hierarchy of the function under the cursor
+callmap.nvim shows the LSP call hierarchy of the function under the cursor
 as a graph that reads left to right. The function is in the middle, its
 callers branch to the left, its callees branch to the right, and a source
 preview of the selected function is shown beside the graph.
@@ -20,9 +20,9 @@ preview of the selected function is shown beside the graph.
 Requires Neovim 0.11 and a language server that supports call hierarchy.
 
 ==============================================================================
-2. USAGE                                                        *callgraph-usage*
+2. USAGE                                                        *callmap-usage*
 
-Put the cursor on a function and run |:Callgraph|. Keys inside the popup:
+Put the cursor on a function and run |:Callmap|. Keys inside the popup:
 
   l          Move right (into callees, or toward the middle from a caller).
   h          Move left (into callers, or toward the middle from a callee).
@@ -39,14 +39,14 @@ A `<` or `>` marker means the callers or callees have not been loaded, and
 `<->` marks a recursive call.
 
 ==============================================================================
-3. CONFIGURATION                                        *callgraph-configuration*
+3. CONFIGURATION                                        *callmap-configuration*
 
-                                                              *callgraph.setup()*
-require("callgraph").setup({opts})
+                                                              *callmap.setup()*
+require("callmap").setup({opts})
 
 Optional. Defaults: >lua
 
-    require("callgraph").setup({
+    require("callmap").setup({
       width = 0.94,
       height = 0.9,
       graph_ratio = 0.56,
@@ -69,20 +69,20 @@ Optional. Defaults: >lua
 Set a mapping to false to skip it.
 
 ==============================================================================
-4. COMMANDS                                                  *callgraph-commands*
+4. COMMANDS                                                  *callmap-commands*
 
-                                                                   *:Callgraph*
-:Callgraph          Open the call graph for the function under the cursor.
+                                                                   *:Callmap*
+:Callmap          Open the call graph for the function under the cursor.
 
 ==============================================================================
-5. HIGHLIGHT GROUPS                                         *callgraph-highlights*
+5. HIGHLIGHT GROUPS                                         *callmap-highlights*
 
-  CallgraphCaller    Caller names (links to String).
-  CallgraphCallee    Callee names (links to Function).
-  CallgraphRoot      The function in the middle (links to Title).
-  CallgraphPath      Path from the selection to the middle.
-  CallgraphSel       The selected function.
-  CallgraphEdge      Connector lines (links to Comment).
+  CallmapCaller    Caller names (links to String).
+  CallmapCallee    Callee names (links to Function).
+  CallmapRoot      The function in the middle (links to Title).
+  CallmapPath      Path from the selection to the middle.
+  CallmapSel       The selected function.
+  CallmapEdge      Connector lines (links to Comment).
 
 All groups are defined with `default = true`.
 

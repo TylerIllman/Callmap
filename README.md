@@ -1,6 +1,15 @@
-# callgraph.nvim
+<p align="center">
+  <img src="docs/images/banner.png" alt="callmap.nvim: LSP call hierarchy as a left-to-right graph with a live preview">
+</p>
 
-Explore Neovim's LSP call hierarchy as a graph that reads left to right, with a live source preview.
+<p align="center">
+  <a href="https://github.com/TylerIllman/callmap.nvim/actions/workflows/ci.yml"><img src="https://github.com/TylerIllman/callmap.nvim/actions/workflows/ci.yml/badge.svg" alt="tests"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/github/license/TylerIllman/callmap.nvim" alt="MIT license"></a>
+  <img src="https://img.shields.io/badge/Neovim-0.11%2B-57A143?logo=neovim&logoColor=white" alt="Neovim 0.11+">
+  <img src="https://img.shields.io/badge/Made%20with-Lua-2C2D72?logo=lua&logoColor=white" alt="Made with Lua">
+  <a href="https://github.com/TylerIllman/callmap.nvim/stargazers"><img src="https://img.shields.io/github/stars/TylerIllman/callmap.nvim?style=flat" alt="GitHub stars"></a>
+  <a href="https://github.com/TylerIllman/callmap.nvim/commits/main"><img src="https://img.shields.io/github/last-commit/TylerIllman/callmap.nvim" alt="Last commit"></a>
+</p>
 
 Put the cursor on a function and open the graph. The function sits in the middle, everything that calls it
 branches off to the left, everything it calls branches off to the right, and a preview of the selected
@@ -34,20 +43,20 @@ With [lazy.nvim](https://github.com/folke/lazy.nvim):
 
 ```lua
 {
-  "TylerIllman/callgraph.nvim",
-  cmd = "Callgraph",
+  "TylerIllman/callmap.nvim",
+  cmd = "Callmap",
   keys = {
-    { "<leader>cg", "<cmd>Callgraph<cr>", desc = "Call graph" },
+    { "<leader>cm", "<cmd>Callmap<cr>", desc = "Call map" },
   },
   opts = {}, -- see Configuration
 }
 ```
 
-The plugin does not set any global keymap. Bind `:Callgraph` to whatever you like.
+The plugin does not set any global keymap. Bind `:Callmap` to whatever you like.
 
 ## Usage
 
-Put the cursor on a function and run `:Callgraph`.
+Put the cursor on a function and run `:Callmap`.
 
 | Key         | Action                                                                     |
 | ----------- | -------------------------------------------------------------------------- |
@@ -69,7 +78,7 @@ both sides together.
 Defaults:
 
 ```lua
-require("callgraph").setup({
+require("callmap").setup({
   width = 0.94,        -- popup width as a fraction of the editor
   height = 0.9,        -- popup height as a fraction of the editor
   graph_ratio = 0.56,  -- share of the popup used by the graph; the rest is the preview
@@ -100,12 +109,12 @@ Set any mapping to `false` to skip it. The arrow keys and `<Esc>` always work as
 
 | Group             | Default link / style     | Used for                                  |
 | ----------------- | ------------------------ | ----------------------------------------- |
-| `CallgraphCaller` | `String`                 | Caller names.                             |
-| `CallgraphCallee` | `Function`               | Callee names.                             |
-| `CallgraphRoot`   | `Title`                  | The function in the middle.               |
-| `CallgraphPath`   | bold, underline          | The path from the selection to the middle.|
-| `CallgraphSel`    | reverse, bold            | The selected function.                    |
-| `CallgraphEdge`   | `Comment`                | Connector lines.                          |
+| `CallmapCaller` | `String`                 | Caller names.                             |
+| `CallmapCallee` | `Function`               | Callee names.                             |
+| `CallmapRoot`   | `Title`                  | The function in the middle.               |
+| `CallmapPath`   | bold, underline          | The path from the selection to the middle.|
+| `CallmapSel`    | reverse, bold            | The selected function.                    |
+| `CallmapEdge`   | `Comment`                | Connector lines.                          |
 
 All groups are defined with `default = true`, so your own definitions win.
 

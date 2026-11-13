@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128" role="img" aria-label="callmap logo">
+<rect width="128" height="128" rx="24" fill="#011628"/>
+<path d="M 22 44 H 43.0 V 64 H 64" fill="none" stroke="#547998" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M 22 84 H 43.0 V 64 H 64" fill="none" stroke="#547998" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M 64 64 H 85.0 V 30 H 106" fill="none" stroke="#547998" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M 64 64 H 85.0 V 64 H 106" fill="none" stroke="#547998" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M 64 64 H 85.0 V 98 H 106" fill="none" stroke="#547998" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+<circle cx="22" cy="44" r="8" fill="#acd98c"/>
+<circle cx="22" cy="84" r="8" fill="#acd98c"/>
+<circle cx="106" cy="30" r="8" fill="#9dc0f1"/>
+<circle cx="106" cy="64" r="8" fill="#9dc0f1"/>
+<circle cx="106" cy="98" r="8" fill="#9dc0f1"/>
+<circle cx="64" cy="64" r="12" fill="#ffffff"/>
+<circle cx="64" cy="64" r="12" fill="none" stroke="#9dc0f1" stroke-width="4"/>
+</svg>
