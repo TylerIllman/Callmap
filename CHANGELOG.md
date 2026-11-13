@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+- Duplicate callers and callees are drawn once, and functions outside the workspace are hidden by default (`hide_external`).
+- Shorter footer. Added `examples/demo.py` and a screenshot to the README.
+
 ## 0.1.0
 
 - Initial release: left-to-right call graph with callers, callees and a source preview, lazy loading,

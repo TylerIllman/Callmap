@@ -10,6 +10,9 @@ M.config = {
   -- Limits for "expand all" so recursive code cannot run away.
   max_expand_depth = 6,
   max_expand_nodes = 400,
+  -- Hide functions defined outside the workspace, such as the standard library and installed
+  -- packages. Set to false to see them.
+  hide_external = true,
   -- Function names longer than this are shortened in the graph.
   max_label = 34,
   -- Keys inside the popup.
@@ -40,15 +43,15 @@ local hl_ns = vim.api.nvim_create_namespace("callgraph_graph")
 local function footer()
   local m = M.config.mappings
   local parts = {
-    string.format("%s/%s move through the graph", m.left, m.right),
+    string.format("%s/%s move", m.left, m.right),
     string.format("%s/%s siblings", m.down, m.up),
     string.format("%s open/fold", m.toggle),
     string.format("%s expand all", m.expand_all),
-    string.format("%s focus preview", m.focus_preview),
-    string.format("%s jump to source", m.open),
+    string.format("%s preview", m.focus_preview),
+    string.format("%s source", m.open),
     string.format("%s quit", m.close),
   }
-  return " " .. table.concat(parts, "   ") .. " "
+  return " " .. table.concat(parts, "  ") .. " "
 end
 
 local state
@@ -78,6 +81,28 @@ local function new_node(item, parent, dir)
   return node
 end
 
+-- True when the item lives in a file outside the language server's workspace folders.
+local function is_external(client, item)
+  local roots = {}
+  for _, folder in ipairs(client.workspace_folders or {}) do
+    roots[#roots + 1] = vim.uri_to_fname(folder.uri)
+  end
+  if client.root_dir then
+    roots[#roots + 1] = client.root_dir
+  end
+  if #roots == 0 then
+    return false
+  end
+  local path = vim.fs.normalize(vim.uri_to_fname(item.uri))
+  for _, root in ipairs(roots) do
+    root = vim.fs.normalize(root)
+    if path == root or vim.startswith(path, root .. "/") then
+      return false
+    end
+  end
+  return true
+end
+
 local function load_children(node, cb)
   if node.children then
     return cb()
@@ -90,13 +115,19 @@ local function load_children(node, cb)
     return
   end
   node.loading = true
-  local method = node.dir == "incoming" and "callHierarchy/incomingCalls" or "callHierarchy/outgoingCalls"
+  local method = node.dir == "incoming" and "callHierarchy/incomingCalls"
+    or "callHierarchy/outgoingCalls"
   state.client:request(method, { item = node.item }, function(_, result)
     node.loading = false
     node.children = {}
+    local seen = {}
     for _, call in ipairs(result or {}) do
       local item = node.dir == "incoming" and call.from or call.to
-      node.children[#node.children + 1] = new_node(item, node, node.dir)
+      local key = key_of(item)
+      if not seen[key] and not (M.config.hide_external and is_external(state.client, item)) then
+        seen[key] = true
+        node.children[#node.children + 1] = new_node(item, node, node.dir)
+      end
     end
     table.sort(node.children, function(a, b)
       if a.item.uri ~= b.item.uri then
@@ -169,13 +200,23 @@ local function collect(node, out)
 end
 
 local JUNCTION = {
-  ["0101"] = "┌", ["1001"] = "└", ["1101"] = "├", ["0111"] = "┬", ["1011"] = "┴",
-  ["1111"] = "┼", ["1100"] = "│", ["1110"] = "┤", ["0110"] = "┐", ["1010"] = "┘",
+  ["0101"] = "┌",
+  ["1001"] = "└",
+  ["1101"] = "├",
+  ["0111"] = "┬",
+  ["1011"] = "┴",
+  ["1111"] = "┼",
+  ["1100"] = "│",
+  ["1110"] = "┤",
+  ["0110"] = "┐",
+  ["1010"] = "┘",
   ["0011"] = "─",
 }
 
 local function junction(up, down, left, right)
-  local function b(v) return v and "1" or "0" end
+  local function b(v)
+    return v and "1" or "0"
+  end
   return JUNCTION[b(up) .. b(down) .. b(left) .. b(right)] or "─"
 end
 
@@ -207,7 +248,9 @@ local function scroll_to(node)
     if not state.fits_v then
       vim.cmd("normal! zz")
     end
-    vim.fn.winrestview({ leftcol = state.fits_h and 0 or math.max(0, node.cell - math.floor(width / 2) + 6) })
+    vim.fn.winrestview({
+      leftcol = state.fits_h and 0 or math.max(0, node.cell - math.floor(width / 2) + 6),
+    })
   end)
 end
 
@@ -235,19 +278,29 @@ local function render()
     end
     return labels[node]
   end
-  local function len(node) return vim.fn.strchars(lab(node)) end
+  local function len(node)
+    return vim.fn.strchars(lab(node))
+  end
 
   local win_in, win_out = {}, {}
-  for _, n in ipairs(in_nodes) do win_in[n.depth] = math.max(win_in[n.depth] or 0, len(n)) end
-  for _, n in ipairs(out_nodes) do win_out[n.depth] = math.max(win_out[n.depth] or 0, len(n)) end
+  for _, n in ipairs(in_nodes) do
+    win_in[n.depth] = math.max(win_in[n.depth] or 0, len(n))
+  end
+  for _, n in ipairs(out_nodes) do
+    win_out[n.depth] = math.max(win_out[n.depth] or 0, len(n))
+  end
   local root_len = vim.fn.strchars(label_of(rout, true))
   win_in[0], win_out[0] = root_len, root_len
 
   -- Column geometry, relative to the root's left edge at x = 0.
   local right_start, left_start, left_end = { [0] = 0 }, { [0] = 0 }, { [0] = root_len - 1 }
   local max_out, max_in = 0, 0
-  for d in pairs(win_out) do max_out = math.max(max_out, d) end
-  for d in pairs(win_in) do max_in = math.max(max_in, d) end
+  for d in pairs(win_out) do
+    max_out = math.max(max_out, d)
+  end
+  for d in pairs(win_in) do
+    max_in = math.max(max_in, d)
+  end
   for d = 1, max_out do
     right_start[d] = right_start[d - 1] + (win_out[d - 1] or 0) + 5
   end
@@ -257,11 +310,17 @@ local function render()
     left_start[d] = left_end[d] - (win_in[d] or 0) + 1
   end
   local min_x = 0
-  for d = 1, max_in do min_x = math.min(min_x, left_start[d]) end
+  for d = 1, max_in do
+    min_x = math.min(min_x, left_start[d])
+  end
 
   local rows = target + 1
-  for _, n in ipairs(in_nodes) do rows = math.max(rows, n.row + 1) end
-  for _, n in ipairs(out_nodes) do rows = math.max(rows, n.row + 1) end
+  for _, n in ipairs(in_nodes) do
+    rows = math.max(rows, n.row + 1)
+  end
+  for _, n in ipairs(out_nodes) do
+    rows = math.max(rows, n.row + 1)
+  end
   local graph_width = -min_x + right_start[max_out] + (win_out[max_out] or 0) + 1
 
   -- Pad so a graph smaller than the window sits in the middle of it.
@@ -306,8 +365,14 @@ local function render()
     node.len = l
     put_str(node.row, node.x, text)
   end
-  for _, n in ipairs(out_nodes) do place(n, "out") end
-  for _, n in ipairs(in_nodes) do if n ~= rin then place(n, "in") end end
+  for _, n in ipairs(out_nodes) do
+    place(n, "out")
+  end
+  for _, n in ipairs(in_nodes) do
+    if n ~= rin then
+      place(n, "in")
+    end
+  end
   rin.x, rin.len = 0, root_len
 
   local function edges(parent, side)
@@ -320,16 +385,22 @@ local function render()
     if side == "out" then
       spine = right_start[d] + (win_out[d] or 0) + 2
       for x = parent.x + parent.len + 1, spine - 1 do
-        if x > parent.x + parent.len then put(parent.row, x, "─") end
+        if x > parent.x + parent.len then
+          put(parent.row, x, "─")
+        end
       end
     else
       spine = left_start[d] - 3
-      for x = spine + 1, parent.x - 2 do put(parent.row, x, "─") end
+      for x = spine + 1, parent.x - 2 do
+        put(parent.row, x, "─")
+      end
     end
     top = math.min(parent.row, kids[1].row)
     bottom = math.max(parent.row, kids[#kids].row)
     local kid_rows = {}
-    for _, k in ipairs(kids) do kid_rows[k.row] = true end
+    for _, k in ipairs(kids) do
+      kid_rows[k.row] = true
+    end
     for r = top, bottom do
       local toward_root, toward_leaf = r == parent.row, kid_rows[r] == true
       local left, right = toward_leaf, toward_root
@@ -359,7 +430,13 @@ local function render()
   vim.api.nvim_buf_clear_namespace(state.buf, hl_ns, 0, -1)
 
   for r = 1, rows do
-    vim.api.nvim_buf_set_extmark(state.buf, hl_ns, r - 1, 0, { end_col = #lines[r], hl_group = "CallgraphEdge", priority = 50 })
+    vim.api.nvim_buf_set_extmark(
+      state.buf,
+      hl_ns,
+      r - 1,
+      0,
+      { end_col = #lines[r], hl_group = "CallgraphEdge", priority = 50 }
+    )
   end
 
   local on_path = path_set(state.sel)
@@ -368,19 +445,39 @@ local function render()
     local line = lines[node.row + 1]
     local s = vim.fn.byteidx(line, node.cell)
     local e = vim.fn.byteidx(line, node.cell + node.len)
-    vim.api.nvim_buf_set_extmark(state.buf, hl_ns, node.row, s, { end_col = e, hl_group = group, priority = 100 })
+    vim.api.nvim_buf_set_extmark(
+      state.buf,
+      hl_ns,
+      node.row,
+      s,
+      { end_col = e, hl_group = group, priority = 100 }
+    )
     if on_path[node] then
-      vim.api.nvim_buf_set_extmark(state.buf, hl_ns, node.row, s, { end_col = e, hl_group = "CallgraphPath", priority = 110 })
+      vim.api.nvim_buf_set_extmark(
+        state.buf,
+        hl_ns,
+        node.row,
+        s,
+        { end_col = e, hl_group = "CallgraphPath", priority = 110 }
+      )
     end
     if node == state.sel or (node == rin and state.sel == rout) then
-      vim.api.nvim_buf_set_extmark(state.buf, hl_ns, node.row, s, { end_col = e, hl_group = "CallgraphSel", priority = 120 })
+      vim.api.nvim_buf_set_extmark(
+        state.buf,
+        hl_ns,
+        node.row,
+        s,
+        { end_col = e, hl_group = "CallgraphSel", priority = 120 }
+      )
     end
   end
   for _, n in ipairs(out_nodes) do
     mark(n, n == rout and "CallgraphRoot" or "CallgraphCallee")
   end
   for _, n in ipairs(in_nodes) do
-    if n ~= rin then mark(n, "CallgraphCaller") end
+    if n ~= rin then
+      mark(n, "CallgraphCaller")
+    end
   end
   rin.cell = rout.cell
 
@@ -414,7 +511,13 @@ show_preview = function(item)
     vim.cmd("normal! zt")
   end)
   local cfg = state.pv_cfg
-  cfg.title = " " .. item.name .. "  —  " .. vim.fn.fnamemodify(vim.uri_to_fname(item.uri), ":~:.") .. ":" .. (item.selectionRange.start.line + 1) .. " "
+  cfg.title = " "
+    .. item.name
+    .. "  —  "
+    .. vim.fn.fnamemodify(vim.uri_to_fname(item.uri), ":~:.")
+    .. ":"
+    .. (item.selectionRange.start.line + 1)
+    .. " "
   vim.api.nvim_win_set_config(state.pv_win, cfg)
 end
 
@@ -492,7 +595,12 @@ local function move_vertical(delta)
   local best
   for _, list in ipairs(state.nodes) do
     for _, n in ipairs(list) do
-      if n.dir == sel.dir and n.depth == sel.depth and n ~= state.root_in and n ~= state.root_out then
+      if
+        n.dir == sel.dir
+        and n.depth == sel.depth
+        and n ~= state.root_in
+        and n ~= state.root_out
+      then
         local dr = (n.row - sel.row) * delta
         if dr > 0 and (not best or dr < (best.row - sel.row) * delta) then
           best = n
@@ -520,7 +628,12 @@ local function toggle()
       load_children(node, function()
         node.expanded = #node.children > 0
         if #node.children == 0 then
-          vim.notify("Callgraph: " .. node.item.name .. " has no " .. (node.dir == "incoming" and "callers" or "callees"))
+          vim.notify(
+            "Callgraph: "
+              .. node.item.name
+              .. " has no "
+              .. (node.dir == "incoming" and "callers" or "callees")
+          )
         end
         render()
       end)
@@ -560,7 +673,11 @@ local function open_item()
   local s = state
   local item = s.sel.item
   close()
-  vim.lsp.util.show_document({ uri = item.uri, range = item.selectionRange }, s.client.offset_encoding, { focus = true })
+  vim.lsp.util.show_document(
+    { uri = item.uri, range = item.selectionRange },
+    s.client.offset_encoding,
+    { focus = true }
+  )
 end
 
 -- Moves into the preview window so it can be scrolled and searched; <Tab>, <Esc> or q come back.
@@ -610,8 +727,16 @@ local function build(client, item, origin_win, buf)
 
   local function cfg(col, width, title)
     return {
-      relative = "editor", row = row0, col = col, width = width, height = H - 2,
-      style = "minimal", border = M.config.border, title = title, title_pos = "center", zindex = 50,
+      relative = "editor",
+      row = row0,
+      col = col,
+      width = width,
+      height = H - 2,
+      style = "minimal",
+      border = M.config.border,
+      title = title,
+      title_pos = "center",
+      zindex = 50,
     }
   end
 
@@ -655,30 +780,46 @@ local function build(client, item, origin_win, buf)
   map("<Right>", move_right, "Right")
   map(m.left, move_left, "Left")
   map("<Left>", move_left, "Left")
-  map(m.down, function() move_vertical(1) end, "Next sibling")
-  map("<Down>", function() move_vertical(1) end, "Next sibling")
-  map(m.up, function() move_vertical(-1) end, "Previous sibling")
-  map("<Up>", function() move_vertical(-1) end, "Previous sibling")
+  map(m.down, function()
+    move_vertical(1)
+  end, "Next sibling")
+  map("<Down>", function()
+    move_vertical(1)
+  end, "Next sibling")
+  map(m.up, function()
+    move_vertical(-1)
+  end, "Previous sibling")
+  map("<Up>", function()
+    move_vertical(-1)
+  end, "Previous sibling")
   map(m.toggle, toggle, "Open or fold callers/callees")
   map(m.expand_all, expand_all, "Expand all")
   map(m.focus_preview, focus_preview, "Focus preview")
   map(m.open, open_item, "Open in editor")
   map(m.close, close, "Close")
   map("<Esc>", close, "Close")
-  map(m.scroll_down, function() scroll_preview("<C-d>") end, "Scroll preview down")
-  map(m.scroll_up, function() scroll_preview("<C-u>") end, "Scroll preview up")
+  map(m.scroll_down, function()
+    scroll_preview("<C-d>")
+  end, "Scroll preview down")
+  map(m.scroll_up, function()
+    scroll_preview("<C-u>")
+  end, "Scroll preview up")
 
   local group = vim.api.nvim_create_augroup("CallgraphWindows", { clear = true })
   vim.api.nvim_create_autocmd("WinClosed", {
     group = group,
     pattern = { tostring(state.win), tostring(state.pv_win) },
-    callback = function() vim.schedule(close) end,
+    callback = function()
+      vim.schedule(close)
+    end,
   })
   vim.api.nvim_create_autocmd("VimResized", { group = group, callback = close })
 
   render()
   for _, root in ipairs({ state.root_in, state.root_out }) do
-    load_children(root, function() render() end)
+    load_children(root, function()
+      render()
+    end)
   end
 end
 
@@ -690,7 +831,9 @@ function M._open_item(client, item, origin_win, buf)
   build(client, item, origin_win, buf)
 end
 
-function M._state() return state end
+function M._state()
+  return state
+end
 
 function M.open()
   if state then

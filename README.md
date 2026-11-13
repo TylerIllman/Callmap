@@ -6,14 +6,9 @@ Put the cursor on a function and open the graph. The function sits in the middle
 branches off to the left, everything it calls branches off to the right, and a preview of the selected
 function's source is always visible beside the graph.
 
-```
-‹ top_level_runner ─┬────── callerA ─┐          ┌─ calleeX ─────┬─ deep_helper ›
-             ‹ cli ─┘                ├─ target ─┤               └─ z ›
-                          ‹ callerB ─┤          └─ fetch_rfam_file ›
-                       ‹ main_entry ─┘
-```
+![The call graph of run_pipeline: callers on the left, callees on the right, and a preview of the selected function](docs/images/graph.png)
 
-`‹` and `›` mark functions whose callers or callees have not been loaded yet, and `↻` marks a recursive call.
+The graph above was drawn from a real language server (pyright) on [examples/demo.py](examples/demo.py). `‹` and `›` mark functions whose callers or callees have not been loaded yet, and `↻` marks a recursive call.
 
 ## Features
 
@@ -23,6 +18,7 @@ function's source is always visible beside the graph.
 - `E` expands everything under the selection, with depth and size limits so recursion cannot run away.
 - The path from the selection back to the middle function is highlighted.
 - Recursive calls are detected and not expanded again.
+- Calls into the standard library and installed packages are hidden by default, so the graph shows your own code. Set `hide_external = false` to see them.
 - Jump to the real source location with `<CR>`.
 
 ## Requirements
@@ -78,6 +74,7 @@ require("callgraph").setup({
   height = 0.9,        -- popup height as a fraction of the editor
   graph_ratio = 0.56,  -- share of the popup used by the graph; the rest is the preview
   border = "rounded",
+  hide_external = true, -- hide functions defined outside the workspace (stdlib, site-packages)
   max_expand_depth = 6,
   max_expand_nodes = 400,
   max_label = 34,      -- longer function names are shortened

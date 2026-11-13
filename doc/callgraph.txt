@@ -51,6 +51,7 @@ Optional. Defaults: >lua
       height = 0.9,
       graph_ratio = 0.56,
       border = "rounded",
+      hide_external = true,
       max_expand_depth = 6,
       max_expand_nodes = 400,
       max_label = 34,
@@ -62,6 +63,9 @@ Optional. Defaults: >lua
       },
     })
 <
+  hide_external   Hide functions defined outside the language server's
+                  workspace, such as the standard library.
+
 Set a mapping to false to skip it.
 
 ==============================================================================
