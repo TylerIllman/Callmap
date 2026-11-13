@@ -3,12 +3,12 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/TylerIllman/callmap.nvim/actions/workflows/ci.yml"><img src="https://github.com/TylerIllman/callmap.nvim/actions/workflows/ci.yml/badge.svg" alt="tests"></a>
-  <a href="LICENSE"><img src="https://img.shields.io/github/license/TylerIllman/callmap.nvim" alt="MIT license"></a>
+  <a href="https://github.com/TylerIllman/Callmap/actions/workflows/ci.yml"><img src="https://github.com/TylerIllman/Callmap/actions/workflows/ci.yml/badge.svg" alt="tests"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/github/license/TylerIllman/Callmap" alt="MIT license"></a>
   <img src="https://img.shields.io/badge/Neovim-0.11%2B-57A143?logo=neovim&logoColor=white" alt="Neovim 0.11+">
   <img src="https://img.shields.io/badge/Made%20with-Lua-2C2D72?logo=lua&logoColor=white" alt="Made with Lua">
-  <a href="https://github.com/TylerIllman/callmap.nvim/stargazers"><img src="https://img.shields.io/github/stars/TylerIllman/callmap.nvim?style=flat" alt="GitHub stars"></a>
-  <a href="https://github.com/TylerIllman/callmap.nvim/commits/main"><img src="https://img.shields.io/github/last-commit/TylerIllman/callmap.nvim" alt="Last commit"></a>
+  <a href="https://github.com/TylerIllman/Callmap/stargazers"><img src="https://img.shields.io/github/stars/TylerIllman/Callmap?style=flat" alt="GitHub stars"></a>
+  <a href="https://github.com/TylerIllman/Callmap/commits/main"><img src="https://img.shields.io/github/last-commit/TylerIllman/Callmap" alt="Last commit"></a>
 </p>
 
 Put the cursor on a function and open the graph. The function sits in the middle, everything that calls it
@@ -43,7 +43,7 @@ With [lazy.nvim](https://github.com/folke/lazy.nvim):
 
 ```lua
 {
-  "TylerIllman/callmap.nvim",
+  "TylerIllman/Callmap",
   cmd = "Callmap",
   keys = {
     { "<leader>cm", "<cmd>Callmap<cr>", desc = "Call map" },
